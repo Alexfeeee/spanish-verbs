@@ -1,794 +1,1414 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>西班牙语动词变位大师 V1.1</title>
-    <style>
-        :root {
-            --primary: #B71C1C; /* 学院红 */
-            --primary-light: #FFCDD2;
-            --secondary: #FFD600; /* 亮黄 */
-            --text: #212121;
-            --text-light: #757575;
-            --bg: #FAFAFA;
-            --white: #FFFFFF;
-            --hover-row: #FFF8E1;
-            --border: #E0E0E0;
-            --root-color: #000;
-            --ending-color: #D32F2F; 
-            --irreg-color: #1565C0; 
-            --aux-color: #616161;   
+    <title>Spanish Verb Conjugator - Aprende Conjugaciones</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'spanish-red': '#C60B1E',
+                        'spanish-yellow': '#FFC400',
+                        'spanish-orange': '#F19B00',
+                        'light-bg': '#F8F5F0',
+                        'dark-text': '#333333',
+                        'accent-blue': '#0077B6'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    animation: {
+                        'bounce-slow': 'bounce 2s infinite',
+                    }
+                }
+            }
         }
-
-        body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .text-shadow {
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            }
+            .card-hover {
+                @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+            }
+            .btn-primary {
+                @apply bg-spanish-red text-white font-medium py-2 px-4 rounded-lg shadow hover:bg-opacity-90 transition-all duration-300;
+            }
+            .btn-secondary {
+                @apply bg-spanish-yellow text-dark-text font-medium py-2 px-4 rounded-lg shadow hover:bg-opacity-90 transition-all duration-300;
+            }
+            .input-field {
+                @apply border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-spanish-red focus:border-transparent;
+            }
+            .section-title {
+                @apply text-2xl md:text-3xl font-bold text-dark-text mb-6 border-b-2 border-spanish-red pb-2 inline-block;
+            }
         }
-
-        /* 导航 */
-        nav {
-            background: var(--primary);
-            color: white;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            z-index: 100;
-        }
-        .nav-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            height: 60px;
-        }
-        .nav-title { font-size: 1.4rem; font-weight: bold; letter-spacing: 1px;}
-        .nav-tabs { display: flex; gap: 5px; height: 100%; margin: 0; padding: 0; list-style: none;}
-        .nav-item {
-            padding: 0 15px;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            font-weight: 500;
-            transition: 0.2s;
-            border-bottom: 4px solid transparent;
-            opacity: 0.9;
-            font-size: 0.95rem;
-        }
-        .nav-item:hover { background: rgba(255,255,255,0.1); opacity: 1; }
-        .nav-item.active { border-bottom-color: var(--secondary); opacity: 1; background: rgba(255,255,255,0.15); }
-
-        /* 开关样式 */
-        .toggle-wrapper { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; margin-left: 15px; background: rgba(0,0,0,0.2); padding: 5px 10px; border-radius: 20px;}
-        .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: var(--secondary); }
-        input:checked + .slider:before { transform: translateX(14px); }
-
-        /* 主体 */
-        main {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-            width: 100%;
-            box-sizing: border-box;
-        }
-        .section { display: none; animation: fadeIn 0.3s ease; }
-        .section.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* 卡片 */
-        .card {
-            background: var(--white);
-            border-radius: 4px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-            padding: 25px;
-            margin-bottom: 25px;
-            border-top: 3px solid transparent;
-        }
-        .card:hover { border-top-color: var(--secondary); }
-
-        /* 标题系统 */
-        h2 { margin: 0 0 20px 0; color: var(--primary); font-size: 1.5rem; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-        h3 { 
-            background: #eee; 
-            padding: 10px 15px; 
-            margin: 30px 0 15px 0; 
-            border-radius: 4px; 
-            color: #333; 
-            font-size: 1.1rem; 
-            border-left: 5px solid var(--primary);
-        }
-        .tense-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        
-        /* 变位表 */
-        .table-wrapper { border: 1px solid #eee; border-radius: 4px; overflow: hidden; }
-        .tense-name { 
-            background: #f9f9f9; padding: 8px 12px; font-weight: bold; color: #555; 
-            font-size: 0.9rem; border-bottom: 1px solid #eee; text-align: center;
-        }
-        .cj-table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
-        .cj-table td { padding: 6px 12px; border-bottom: 1px solid #f5f5f5; }
-        .cj-table tr:last-child td { border-bottom: none; }
-        .cj-table tr:hover { background-color: var(--hover-row); }
-        
-        .pronoun { color: #aaa; width: 30%; font-size: 0.8rem; user-select: none;}
-        .verb-form { color: var(--text); font-family: 'Georgia', serif; }
-        
-        /* 颜色 */
-        .root { color: var(--root-color); }
-        .ending { color: var(--ending-color); font-weight: bold; }
-        .irreg { color: var(--irreg-color); font-weight: bold; text-decoration: underline; text-decoration-color: rgba(21, 101, 192, 0.3); }
-        .aux { color: var(--aux-color); font-size: 0.9em; }
-        .part { color: var(--text); font-weight: bold; }
-
-        /* 选择器 */
-        .verb-selector { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
-        .v-btn {
-            background: #fff; border: 1px solid #ddd; padding: 6px 12px; border-radius: 15px;
-            cursor: pointer; font-size: 0.9rem; color: #555; transition: all 0.2s;
-        }
-        .v-btn:hover { border-color: var(--primary); color: var(--primary); background: #fff5f5; }
-        .v-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
-        .group-label { font-size: 0.85rem; color: #888; margin: 10px 0 5px 0; display: block; text-transform: uppercase; font-weight: bold;}
-
-        /* 非人称 */
-        .np-grid { display: flex; gap: 15px; flex-wrap: wrap; }
-        .np-box { flex: 1; background: #e3f2fd; padding: 10px; border-radius: 4px; text-align: center; min-width: 120px; }
-        .np-label { display: block; font-size: 0.8rem; color: #1565c0; margin-bottom: 5px; font-weight: bold;}
-        .np-val { font-size: 1.2rem; font-weight: bold; }
-
-        /* 测试 & 错题 */
-        .quiz-box { max-width: 600px; margin: 20px auto; text-align: center; }
-        .q-verb { font-size: 2.5rem; font-weight: bold; color: var(--primary); margin: 10px 0; }
-        .q-meta { color: #666; margin-bottom: 20px; font-size: 1.1rem;}
-        .q-input { 
-            font-size: 1.5rem; padding: 10px; width: 80%; text-align: center; 
-            border: 2px solid #ddd; border-radius: 8px; outline: none; transition: 0.3s;
-        }
-        .q-input:focus { border-color: var(--secondary); }
-        .char-btn { background: #eee; border: none; padding: 8px 14px; margin: 2px; border-radius: 4px; cursor: pointer; font-size: 1rem;}
-        .feedback { height: 30px; margin: 10px 0; font-weight: bold; font-size: 1.1rem;}
-        .correct-msg { color: #2e7d32; }
-        .wrong-msg { color: #c62828; }
-        .btn-main { background: var(--primary); color: white; border: none; padding: 10px 30px; border-radius: 4px; cursor: pointer; font-size: 1rem; }
-        
-        .record-item { border-left: 4px solid #d32f2f; background: #fff; padding: 12px; margin-bottom: 8px; border-radius: 0 4px 4px 0; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-
-        .hint { font-size: 0.8rem; color: #888; margin-top: 5px; }
-
     </style>
 </head>
-<body>
-
-<nav>
-    <div class="nav-container">
-        <div style="display:flex; align-items:center;">
-            <div class="nav-title">🇪🇸 Verb Master</div>
-            <!-- 拉美模式开关 -->
-            <div class="toggle-wrapper">
-                <label class="switch">
-                    <input type="checkbox" id="latam-toggle" onchange="toggleLatamMode()">
-                    <span class="slider round"></span>
-                </label>
-                <span>Latam (无Vosotros)</span>
+<body class="bg-light-bg min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-md">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <img src="https://p11-doubao-search-sign.byteimg.com/pgc-image/45c778c51f02414787cf0122392492d1~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1780647827&x-signature=a7nx7LdCbzt1%2Bh8Y8TmHLobSOuQ%3D" onerror="this.src='https://upload.wikimedia.org/wikipedia/en/9/9a/Flag_of_Spain.svg'" alt="Spanish Flag" class="h-10 w-auto">
+                <h1 class="text-2xl font-bold text-spanish-red">Spanish Verb Conjugator</h1>
+            </div>
+            <div class="hidden md:flex items-center space-x-6">
+                <a href="#conjugator" class="text-dark-text hover:text-spanish-red transition-colors">Conjugator</a>
+                <a href="#practice" class="text-dark-text hover:text-spanish-red transition-colors">Practice</a>
+                <a href="#progress" class="text-dark-text hover:text-spanish-red transition-colors">Progress</a>
+                <a href="#rules" class="text-dark-text hover:text-spanish-red transition-colors">Rules</a>
+            </div>
+            <button id="mobile-menu-button" class="md:hidden text-dark-text text-2xl">
+                <i class="fa fa-bars"></i>
+            </button>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="md:hidden hidden bg-white border-t border-gray-200">
+            <div class="container mx-auto px-4 py-2 flex flex-col space-y-3">
+                <a href="#conjugator" class="text-dark-text hover:text-spanish-red transition-colors py-2">Conjugator</a>
+                <a href="#practice" class="text-dark-text hover:text-spanish-red transition-colors py-2">Practice</a>
+                <a href="#progress" class="text-dark-text hover:text-spanish-red transition-colors py-2">Progress</a>
+                <a href="#rules" class="text-dark-text hover:text-spanish-red transition-colors py-2">Rules</a>
             </div>
         </div>
+    </header>
 
-        <ul class="nav-tabs">
-            <li class="nav-item active" onclick="setTab('learn', this)">查询</li>
-            <li class="nav-item" onclick="setTab('quiz', this)">测试</li>
-            <li class="nav-item" onclick="setTab('records', this)">错题</li>
-        </ul>
-    </div>
-</nav>
-
-<main>
-    <!-- 1. 学习模块 -->
-    <div id="learn" class="section active">
-        <div class="card">
-            <span class="group-label">规则动词 (Regulares)</span>
-            <div class="verb-selector">
-                <button class="v-btn active" onclick="loadVerb('hablar')">Hablar</button>
-                <button class="v-btn" onclick="loadVerb('comer')">Comer</button>
-                <button class="v-btn" onclick="loadVerb('vivir')">Vivir</button>
-            </div>
-
-            <span class="group-label">有规律不规则</span>
-            <div class="verb-selector">
-                <button class="v-btn" onclick="loadVerb('pensar')">Pensar (e-ie)</button>
-                <button class="v-btn" onclick="loadVerb('dormir')">Dormir (o-ue)</button>
-                <button class="v-btn" onclick="loadVerb('poder')">Poder (o-ue)</button>
-                <button class="v-btn" onclick="loadVerb('jugar')">Jugar (u-ue)</button>
-                <button class="v-btn" onclick="loadVerb('pedir')">Pedir (e-i)</button>
-                <button class="v-btn" onclick="loadVerb('hacer')">Hacer (Yo-Go)</button>
-                <button class="v-btn" onclick="loadVerb('conocer')">Conocer (c-zc)</button>
-            </div>
-
-            <span class="group-label">完全不规则</span>
-            <div class="verb-selector">
-                <button class="v-btn" onclick="loadVerb('ser')">Ser</button>
-                <button class="v-btn" onclick="loadVerb('estar')">Estar</button>
-                <button class="v-btn" onclick="loadVerb('ir')">Ir</button>
-                <button class="v-btn" onclick="loadVerb('dar')">Dar</button>
-                <button class="v-btn" onclick="loadVerb('haber')">Haber</button>
-                <button class="v-btn" onclick="loadVerb('tener')">Tener</button>
-                <button class="v-btn" onclick="loadVerb('decir')">Decir</button>
-                <button class="v-btn" onclick="loadVerb('venir')">Venir</button>
+    <!-- Hero Section -->
+    <section class="bg-gradient-to-r from-spanish-red to-spanish-orange text-white py-16">
+        <div class="container mx-auto px-4 text-center">
+            <h2 class="text-4xl md:text-5xl font-bold mb-4 text-shadow">Master Spanish Verb Conjugations</h2>
+            <p class="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">Learn, practice, and master Spanish verb conjugations with our interactive app</p>
+            <div class="flex flex-col md:flex-row justify-center gap-4">
+                <a href="#conjugator" class="btn-secondary text-lg">
+                    <i class="fa fa-search mr-2"></i>Try Conjugator
+                </a>
+                <a href="#practice" class="bg-white text-spanish-red font-medium py-2 px-4 rounded-lg shadow hover:bg-opacity-90 transition-all duration-300 text-lg">
+                    <i class="fa fa-pencil mr-2"></i>Start Practice
+                </a>
             </div>
         </div>
+    </section>
 
-        <div id="conjugation-display"></div>
-    </div>
-
-    <!-- 2. 测试模块 -->
-    <div id="quiz" class="section">
-        <div class="card quiz-box">
-            <h2 style="border:none; padding:0;">变位特训</h2>
-            <div id="q-meta" class="q-meta">加载中...</div>
-            <div id="q-verb" class="q-verb">...</div>
-            
-            <input type="text" id="q-input" class="q-input" placeholder="输入变位..." autocomplete="off">
-            <div class="hint">💡 快捷键：输入 ' + a = á, ' + n = ñ</div>
-            <div id="q-feedback" class="feedback"></div>
-            
-            <div>
-                <button class="btn-main" onclick="checkAnswer()">提交 (Enter)</button>
-                <button style="background:none; border:none; color:#999; cursor:pointer; margin-left:15px;" onclick="nextQuestion()">跳过</button>
-            </div>
-            
-            <div style="margin-top:20px;">
-                <button class="char-btn" onclick="addChar('á')">á</button>
-                <button class="char-btn" onclick="addChar('é')">é</button>
-                <button class="char-btn" onclick="addChar('í')">í</button>
-                <button class="char-btn" onclick="addChar('ó')">ó</button>
-                <button class="char-btn" onclick="addChar('ú')">ú</button>
-                <button class="char-btn" onclick="addChar('ñ')">ñ</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 3. 错题本 -->
-    <div id="records" class="section">
-        <div class="card">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                <h2 style="margin:0; border:none; padding:0;">错题记录</h2>
-                <button class="v-btn" onclick="clearRecords()">清空记录</button>
-            </div>
-            <div id="records-list"></div>
-        </div>
-    </div>
-
-</main>
-
-<script>
-/* ================= 全局状态 ================= */
-let isLatamMode = false;
-let currentVerb = 'hablar'; // 记住当前查看的动词
-
-function toggleLatamMode() {
-    isLatamMode = document.getElementById('latam-toggle').checked;
-    // 如果当前在学习页，重新渲染表格
-    if(document.getElementById('learn').classList.contains('active')) {
-        renderDisplay(currentVerb);
-    }
-    // 如果当前在测试页，不需要立即动作，但在下一题时会生效
-}
-
-/* ================= 核心数据定义 ================= */
-
-const pronouns = ['Yo', 'Tú', 'Él/Ella/Usted', 'Nosotros/as', 'Vosotros/as', 'Ellos/as/Ustedes'];
-
-// 1. 规则词尾
-const regularEndings = {
-    ar: {
-        pres: ['o','as','a','amos','áis','an'],
-        imp: ['aba','abas','aba','ábamos','abais','aban'],
-        pret: ['é','aste','ó','amos','asteis','aron'],
-        fut: ['aré','arás','ará','aremos','aréis','arán'],
-        cond: ['aría','arías','aría','aríamos','aríais','arían'],
-        sub_pres: ['e','es','e','emos','éis','en'],
-        sub_imp_ra: ['ara','aras','ara','áramos','arais','aran'],
-        sub_imp_se: ['ase','ases','ase','ásemos','aseis','asen'],
-        sub_fut: ['are','ares','are','áremos','areis','aren'],
-        part: 'ado', ger: 'ando'
-    },
-    er: {
-        pres: ['o','es','e','emos','éis','en'],
-        imp: ['ía','ías','ía','íamos','íais','ían'],
-        pret: ['í','iste','ió','imos','isteis','ieron'],
-        fut: ['eré','erás','erá','eremos','eréis','erán'],
-        cond: ['ería','erías','ería','eríamos','eríais','erían'],
-        sub_pres: ['a','as','a','amos','áis','an'],
-        sub_imp_ra: ['iera','ieras','iera','iéramos','ierais','ieran'],
-        sub_imp_se: ['iese','ieses','iese','iésemos','ieseis','iesen'],
-        sub_fut: ['iere','ieres','iere','iéremos','iereis','ieren'],
-        part: 'ido', ger: 'iendo'
-    },
-    ir: {
-        pres: ['o','es','e','imos','ís','en'],
-        imp: ['ía','ías','ía','íamos','íais','ían'],
-        pret: ['í','iste','ió','imos','isteis','ieron'],
-        fut: ['iré','irás','irá','iremos','iréis','irán'],
-        cond: ['iría','irías','iría','iríamos','iríais','irían'],
-        sub_pres: ['a','as','a','amos','áis','an'],
-        sub_imp_ra: ['iera','ieras','iera','iéramos','ierais','ieran'],
-        sub_imp_se: ['iese','ieses','iese','iésemos','ieseis','iesen'],
-        sub_fut: ['iere','ieres','iere','iéremos','iereis','ieren'],
-        part: 'ido', ger: 'iendo'
-    }
-};
-
-// 2. 助动词 Haber
-const haberForms = {
-    pres: ['he','has','ha','hemos','habéis','han'],
-    imp: ['había','habías','había','habíamos','habíais','habían'],
-    pret: ['hube','hubiste','hubo','hubimos','hubisteis','hubieron'],
-    fut: ['habré','habrás','habrá','habremos','habréis','habrán'],
-    cond: ['habría','habrías','habría','habríamos','habríais','habrían'],
-    sub_pres: ['haya','hayas','haya','hayamos','hayáis','hayan'],
-    sub_imp_ra: ['hubiera','hubieras','hubiera','hubiéramos','hubierais','hubieran'],
-    sub_imp_se: ['hubiese','hubieses','hubiese','hubiésemos','hubieseis','hubiesen'],
-    sub_fut: ['hubiere','hubieres','hubiere','hubiéremos','hubiereis','hubieren']
-};
-
-// 3. 动词数据库 (修复：补充缺失的变位、修正不规则动词定义)
-const verbsDB = {
-    // 规则
-    hablar: { trans: '说', type: 'reg', end: 'ar' },
-    comer: { trans: '吃', type: 'reg', end: 'er' },
-    vivir: { trans: '生活', type: 'reg', end: 'ir' },
-    // 规律不规则
-    pensar: { trans: '想', type: 'stem', end: 'ar', rule: 'e-ie' },
-    dormir: { trans: '睡觉', type: 'stem', end: 'ir', rule: 'o-ue', ger: 'durmiendo' },
-    poder: { trans: '能够', type: 'stem', end: 'er', rule: 'o-ue', strong_stem: 'pud', future_stem: 'podr', ger_stem: 'pud' },
-    jugar: { trans: '玩', type: 'stem', end: 'ar', rule: 'u-ue', pret_yo: 'jugué' },
-    pedir: { trans: '请求', type: 'stem', end: 'ir', rule: 'e-i' },
-    hacer: { 
-        trans: '做', type: 'yoga', end: 'er', yo: 'hago', 
-        strong_stem: 'hic', strong_stem_3: 'hiz', future_stem: 'har', 
-        part: 'hecho',
-        sub_pres: ['haga','hagas','haga','hagamos','hagáis','hagan'] // 修复：补充虚拟式现在时
-    },
-    conocer: { trans: '认识', type: 'yoga', end: 'er', yo: 'conozco' },
-    // 完全不规则
-    dar: { 
-        trans: '给', type: 'total', end: 'ar', 
-        forms: {
-            pres: ['doy','das','da','damos','dais','dan'],
-            imp: ['daba','dabas','daba','dábamos','dabais','daban'],
-            pret: ['di','diste','dio','dimos','disteis','dieron'],
-            fut: ['daré','darás','dará','daremos','daréis','darán'],
-            cond: ['daría','darías','daría','daríamos','daríais','darían'],
-            sub_pres: ['dé','des','dé','demos','deis','den'],
-            sub_imp_ra: ['diera','dieras','diera','diéramos','dierais','dieran'],
-            sub_imp_se: ['diese','dieses','diese','diésemos','dieseis','diesen'],
-            sub_fut: ['diere','dieres','diere','diéremos','diereis','dieren'],
-            imp_af: ['-','da','dé','demos','dad','den']
-        }
-    },
-    ser: { 
-        trans: '是', type: 'total', end: 'er', 
-        forms: {
-            pres: ['soy','eres','es','somos','sois','son'],
-            imp: ['era','eras','era','éramos','erais','eran'],
-            pret: ['fui','fuiste','fue','fuimos','fuisteis','fueron'],
-            fut: ['seré','serás','será','seremos','seréis','serán'], // 修复：补充将来时
-            cond: ['sería','serías','sería','seríamos','seríais','serían'], // 修复：补充条件式
-            sub_pres: ['sea','seas','sea','seamos','seáis','sean'],
-            sub_imp_ra: ['fuera','fueras','fuera','fuéramos','fuerais','fueran'],
-            sub_imp_se: ['fuese','fueses','fuese','fuésemos','fueseis','fuesen'], // 修复：补充-se形式
-            sub_fut: ['fuere','fueres','fuere','fuéremos','fuereis','fueren'], // 修复：补充将来时
-            imp_af: ['-','sé','sea','seamos','sed','sean']
-        }
-    },
-    ir: { 
-        trans: '去', type: 'total', end: 'ir', ger: 'yendo', part: 'ido', // 修复：补充分词
-        forms: {
-            pres: ['voy','vas','va','vamos','vais','van'],
-            imp: ['iba','ibas','iba','íbamos','ibais','iban'],
-            pret: ['fui','fuiste','fue','fuimos','fuisteis','fueron'],
-            fut: ['iré','irás','irá','iremos','iréis','irán'], // 修复：补充将来时
-            cond: ['iría','irías','iría','iríamos','iríais','irían'], // 修复：补充条件式
-            sub_pres: ['vaya','vayas','vaya','vayamos','vayáis','vayan'],
-            sub_imp_ra: ['fuera','fueras','fuera','fuéramos','fuerais','fueran'],
-            sub_imp_se: ['fuese','fueses','fuese','fuésemos','fueseis','fuesen'], // 修复：补充-se形式
-            sub_fut: ['fuere','fueres','fuere','fuéremos','fuereis','fueren'], // 修复：补充将来时
-            imp_af: ['-','ve','vaya','vayamos','id','vayan']
-        }
-    },
-    tener: { 
-        trans: '拥有', type: 'yoga', end: 'er', yo: 'tengo', 
-        strong_stem: 'tuv', future_stem: 'tendr', imp_af_tu: 'ten',
-        sub_pres: ['tenga','tengas','tenga','tengamos','tengáis','tengan'] // 修复：补充虚拟式现在时
-    },
-    estar: { 
-        trans: '在', type: 'yoga', end: 'ar', yo: 'estoy', 
-        strong_stem: 'estuv', future_stem: 'estar', // 修复：补充将来时stem
-        sub_pres: ['esté','estés','esté','estemos','estéis','estén'] 
-    },
-    haber: { 
-        trans: '有(辅助)', type: 'yoga', end: 'er', yo: 'he', 
-        strong_stem: 'hub', future_stem: 'habr', 
-        sub_pres: ['haya','hayas','haya','hayamos','hayáis','hayan'] 
-    },
-    decir: { 
-        trans: '说', type: 'yoga', end: 'ir', yo: 'digo', 
-        strong_stem: 'dij', future_stem: 'dir', part: 'dicho', 
-        imp_af_tu: 'di', rule: 'e-i' 
-    },
-    venir: { 
-        trans: '来', type: 'yoga', end: 'ir', yo: 'vengo', 
-        strong_stem: 'vin', future_stem: 'vendr', 
-        imp_af_tu: 'ven', rule: 'e-ie' 
-    }
-};
-
-// 修复：统一时态键名，将sub_imp1改为sub_imp_ra，补充sub_imp_se展示
-const layoutStructure = [
-    { header: '第一板块：非人称形式', type: 'non_personal' },
-    { header: '第二板块：陈述式 (Indicativo)', subsections: [
-        { title: '1. 简单时态', tenses: ['pres', 'imp', 'pret', 'fut', 'cond'] },
-        { title: '2. 复合时态', tenses: ['comp_pres', 'comp_imp', 'comp_pret', 'comp_fut', 'comp_cond'] }
-    ]},
-    { header: '第三板块：虚拟式 (Subjuntivo)', subsections: [
-        { title: '1. 简单时态', tenses: ['sub_pres', 'sub_imp_ra', 'sub_imp_se', 'sub_fut'] }, // 修复：添加sub_imp_se
-        { title: '2. 复合时态', tenses: ['sub_comp_pres', 'sub_comp_imp', 'sub_comp_fut'] }
-    ]},
-    { header: '第四板块：命令式 (Imperativo)', subsections: [
-        { title: '指令', tenses: ['imp_af', 'imp_neg'] }
-    ]}
-];
-
-const labels = {
-    inf: '原形 (Infinitivo)', ger: '副动词 (Gerundio)', part: '分词 (Participio)',
-    pres: '现在时', imp: '过去未完成时', pret: '简单过去时', fut: '将来时', cond: '条件式',
-    comp_pres: '现在完成时', comp_imp: '过去完成时', comp_pret: '先过去时', comp_fut: '将来完成时', comp_cond: '复合条件式',
-    sub_pres: '虚拟式现在时', sub_imp_ra: '虚拟式过去未完成时 (-ra)', sub_imp_se: '虚拟式过去未完成时 (-se)', sub_fut: '虚拟式将来时', // 修复：补充sub_imp_se标签
-    sub_comp_pres: '虚拟式现在完成时', sub_comp_imp: '虚拟式过去完成时', sub_comp_fut: '虚拟式将来完成时',
-    imp_af: '肯定命令式', imp_neg: '否定命令式'
-};
-
-/* ================= 变位逻辑引擎 ================= */
-
-function getParticiple(verb) {
-    const vData = verbsDB[verb];
-    if (!vData) return "Error";
-    if (vData.part) return vData.part;
-    // 修复：简化逻辑，优先使用规则词尾
-    return verb.slice(0, -2) + regularEndings[vData.end].part;
-}
-
-function getGerund(verb) {
-    const vData = verbsDB[verb];
-    if (vData.ger) return vData.ger;
-    const stem = verb.slice(0,-2);
-    const end = vData.end;
-    if (vData.ger_stem) return vData.ger_stem + 'iendo';
-    if (end === 'ir' && (vData.rule === 'e-ie' || vData.rule === 'e-i')) return stem.replace(/e(?!.*e)/, 'i') + 'iendo';
-    if (end === 'ir' && vData.rule === 'o-ue') return stem.replace(/o(?!.*o)/, 'u') + 'iendo';
-    if (['leer','traer','caer'].includes(verb)) return stem + 'yendo';
-    return stem + regularEndings[end].ger;
-}
-
-function conjugate(verb, tense, pIdx) {
-    const vData = verbsDB[verb];
-    if (!vData) return '<span class="wrong-msg">未知动词</span>'; // 修复：添加错误处理
-    const stem = verb.slice(0, -2);
-    
-    // 复合时态
-    if (tense.includes('comp_')) {
-        const pp = getParticiple(verb);
-        let auxKey = tense.replace('comp_', '');
-        // 修复：复合时态助动词映射
-        if (auxKey === 'pret') auxKey = 'pret'; 
-        if (tense === 'sub_comp_pres') auxKey = 'sub_pres';
-        if (tense === 'sub_comp_imp') auxKey = 'sub_imp_ra'; // 修复：明确复合虚拟式过去时用-ra形式
-        if (tense === 'sub_comp_fut') auxKey = 'sub_fut';
-        if (tense === 'comp_cond') auxKey = 'cond';
-        const aux = haberForms[auxKey] ? haberForms[auxKey][pIdx] : '错误'; // 修复：添加助动词存在性检查
-        return `<span class="aux">${aux}</span> <span class="part">${pp}</span>`;
-    }
-
-    // 完全不规则：优先使用自定义forms
-    if (vData.type === 'total' && vData.forms && vData.forms[tense] && vData.forms[tense][pIdx] !== undefined) {
-        return `<span class="irreg">${vData.forms[tense][pIdx]}</span>`;
-    }
-
-    // 简单过去时
-    if (tense === 'pret') {
-        if (pIdx === 0 && vData.pret_yo) return `<span class="irreg">${vData.pret_yo}</span>`;
-        if (vData.strong_stem) {
-            const sStem = vData.strong_stem;
-            const strongEndings = ['e', 'iste', 'o', 'imos', 'isteis', 'ieron'];
-            let finalStem = sStem;
-            if (verb === 'hacer' && pIdx === 2) finalStem = 'hiz';
-            let suffix = strongEndings[pIdx];
-            if (sStem.endsWith('j') && pIdx === 5) suffix = 'eron'; 
-            return `<span class="irreg">${finalStem}</span><span class="ending">${suffix}</span>`;
-        }
-        if (vData.end === 'ir' && vData.type === 'stem' && (pIdx === 2 || pIdx === 5)) {
-            let irStem = stem;
-            if (vData.rule === 'e-ie' || vData.rule === 'e-i') irStem = stem.replace(/e(?!.*e)/, 'i');
-            if (vData.rule === 'o-ue') irStem = stem.replace(/o(?!.*o)/, 'u');
-            let suffix = regularEndings['ir']['pret'][pIdx];
-            return `<span class="irreg">${irStem}</span><span class="ending">${suffix}</span>`;
-        }
-    }
-
-    // 将来/条件
-    if ((tense === 'fut' || tense === 'cond') && vData.future_stem) {
-        const fStem = vData.future_stem;
-        const suffix = regularEndings['ar'][tense][pIdx]; 
-        return `<span class="irreg">${fStem}</span><span class="ending">${suffix}</span>`;
-    }
-
-    // 修复：虚拟式过去未完成时(-ra/-se)处理，修正词尾重音
-    if (tense === 'sub_imp_ra' || tense === 'sub_imp_se' || tense === 'sub_fut') {
-        let pret3plRaw = conjugate(verb, 'pret', 5);
-        let pret3pl = pret3plRaw.replace(/<[^>]*>/g, '');
-        let base = pret3pl.slice(0, -3); 
-        // 修复：修正词尾重音，添加-se形式的词尾
-        let endingMap = {
-            'sub_imp_ra': ['ra','ras','ra','áramos','rais','ran'], // 修复：添加重音
-            'sub_imp_se': ['se','ses','se','ásemos','seis','sen'], // 修复：添加-se词尾
-            'sub_fut': ['re','res','re','áremos','reis','ren']
-        };
-        let suffix = endingMap[tense][pIdx];
-        if (pIdx === 3) {
-            let lastChar = base.slice(-1);
-            let prevBase = base.slice(0, -1);
-            if(lastChar === 'a') lastChar = 'á';
-            if(lastChar === 'e') lastChar = 'é';
-            if(lastChar === 'i') lastChar = 'í'; 
-            base = prevBase + lastChar;
-        }
-        if (vData.strong_stem || vData.type === 'total' || (vData.end === 'ir' && vData.type === 'stem')) {
-            return `<span class="irreg">${base}</span><span class="ending">${suffix}</span>`;
-        }
-        return `<span class="root">${base}</span><span class="ending">${suffix}</span>`;
-    }
-
-    // 命令式
-    if (tense === 'imp_af') {
-        // 修复：优先检查自定义命令式形式
-        if (vData.forms && vData.forms.imp_af && vData.forms.imp_af[pIdx] !== undefined) {
-            return `<span class="irreg">${vData.forms.imp_af[pIdx]}</span>`;
-        }
-        if (pIdx === 1 && vData.imp_af_tu) return `<span class="irreg">${vData.imp_af_tu}</span>`;
-        if (pIdx === 1) return conjugate(verb, 'pres', 2);
-        if (pIdx === 4) { 
-            let vosForm = verb.slice(0, -1) + 'd'; 
-            return `<span class="root">${vosForm.slice(0,-1)}</span><span class="ending">d</span>`;
-        }
-        return conjugate(verb, 'sub_pres', pIdx);
-    }
-    // 修复：命令式否定式 - 保留原虚拟式样式，不提取纯文本
-    if (tense === 'imp_neg') {
-        if (pIdx === 0) return ''; // Yo无命令式
-        const subForm = conjugate(verb, 'sub_pres', pIdx);
-        return `<span class="aux">no</span> ${subForm}`;
-    }
-
-    // 常规变位
-    let suffix = regularEndings[vData.end][tense] ? regularEndings[vData.end][tense][pIdx] : '';
-    if (!suffix) return '<span class="wrong-msg">无此变位</span>'; // 修复：空值处理
-    let currStem = stem;
-    let isIrreg = false;
-
-    if (tense === 'pres' && pIdx === 0 && vData.yo) return `<span class="irreg">${vData.yo}</span>`;
-
-    if (tense === 'sub_pres' && (vData.type === 'yoga' || vData.type === 'yo-zc')) {
-        if (vData.sub_pres) return `<span class="irreg">${vData.sub_pres[pIdx]}</span>`;
-        let yoForm = vData.yo;
-        if (yoForm.endsWith('o')) {
-            let zStem = yoForm.slice(0, -1);
-            return `<span class="irreg">${zStem}</span><span class="ending">${suffix}</span>`;
-        }
-    }
-
-    if (vData.type === 'stem') {
-        if ((tense === 'pres' || tense === 'sub_pres') && ![3,4].includes(pIdx)) {
-            if (vData.rule === 'e-ie') currStem = stem.replace(/e(?!.*e)/, 'ie');
-            if (vData.rule === 'o-ue') currStem = stem.replace(/o(?!.*o)/, 'ue');
-            if (vData.rule === 'u-ue') currStem = stem.replace(/u(?!.*u)/, 'ue');
-            if (vData.rule === 'e-i')  currStem = stem.replace(/e(?!.*e)/, 'i');
-            if (currStem !== stem) isIrreg = true;
-        }
-        if (tense === 'sub_pres' && [3,4].includes(pIdx) && vData.end === 'ir') {
-             if (vData.rule === 'e-ie' || vData.rule === 'e-i') { currStem = stem.replace(/e(?!.*e)/, 'i'); isIrreg = true; }
-             if (vData.rule === 'o-ue') { currStem = stem.replace(/o(?!.*o)/, 'u'); isIrreg = true; }
-        }
-    }
-
-    if (isIrreg) return `<span class="irreg">${currStem}</span><span class="ending">${suffix}</span>`;
-    return `<span class="root">${currStem}</span><span class="ending">${suffix}</span>`;
-}
-
-/* ================= 页面渲染逻辑 ================= */
-
-function renderDisplay(verb) {
-    currentVerb = verb;
-    const container = document.getElementById('conjugation-display');
-    const vData = verbsDB[verb];
-    if (!vData) { // 修复：未知动词处理
-        container.innerHTML = '<div class="card"><h2>错误</h2><p>未知动词，请选择列表中的动词</p></div>';
-        return;
-    }
-    let html = `
-    <div class="card" style="border-top-color:var(--primary);">
-        <h2 style="border:none; margin-bottom:5px;">${verb.toUpperCase()}</h2>
-        <p style="color:#666;">含义: ${vData.trans}</p>
-    </div>`;
-
-    layoutStructure.forEach(block => {
-        if (block.type === 'non_personal') {
-            html += `<div class="card">
-                <h2>${block.header}</h2>
-                <div class="np-grid">
-                    <div class="np-box"><span class="np-label">Infinitivo</span><span class="np-val">${verb}</span></div>
-                    <div class="np-box"><span class="np-label">Gerundio</span><span class="np-val">${getGerund(verb)}</span></div>
-                    <div class="np-box"><span class="np-label">Participio</span><span class="np-val">${getParticiple(verb)}</span></div>
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Conjugator Section -->
+        <section id="conjugator" class="mb-16">
+            <h2 class="section-title">Verb Conjugator</h2>
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex flex-col md:flex-row gap-6">
+                    <div class="flex-1">
+                        <div class="mb-4">
+                            <label for="verb-input" class="block text-dark-text font-medium mb-2">Enter a verb:</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="verb-input" class="input-field flex-1" placeholder="e.g., hablar, comer, vivir" autocomplete="off">
+                                <button id="conjugate-btn" class="btn-primary">
+                                    <i class="fa fa-search mr-1"></i> Conjugate
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="tense-select" class="block text-dark-text font-medium mb-2">Select tense:</label>
+                            <select id="tense-select" class="input-field w-full">
+                                <option value="present">Present Indicative</option>
+                                <option value="preterite">Preterite</option>
+                                <option value="imperfect">Imperfect</option>
+                                <option value="future">Future</option>
+                                <option value="conditional">Conditional</option>
+                                <option value="present_subjunctive">Present Subjunctive</option>
+                                <option value="imperfect_subjunctive">Imperfect Subjunctive</option>
+                                <option value="imperative">Imperative</option>
+                            </select>
+                        </div>
+                        
+                        <div id="verb-info" class="hidden mb-6 p-4 bg-light-bg rounded-lg">
+                            <h3 class="font-bold text-lg mb-2">Verb Information</h3>
+                            <p><span class="font-medium">Infinitive:</span> <span id="verb-infinitive"></span></p>
+                            <p><span class="font-medium">Type:</span> <span id="verb-type"></span></p>
+                            <p><span class="font-medium">Translation:</span> <span id="verb-translation"></span></p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex-1">
+                        <div id="conjugation-result" class="hidden">
+                            <h3 class="font-bold text-lg mb-4 text-center" id="conjugation-title">Present Indicative</h3>
+                            <div class="overflow-x-auto">
+                                <table class="w-full border-collapse">
+                                    <thead>
+                                        <tr class="bg-spanish-red bg-opacity-10">
+                                            <th class="border border-gray-200 px-4 py-2 text-left">Person</th>
+                                            <th class="border border-gray-200 px-4 py-2 text-left">Conjugation</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="conjugation-table">
+                                        <!-- Conjugation results will be inserted here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div id="conjugation-placeholder" class="flex flex-col items-center justify-center h-full min-h-[300px] text-gray-500">
+                            <div class="text-6xl text-gray-300 mb-4">
+                                <i class="fa fa-book"></i>
+                            </div>
+                            <p class="text-center">Enter a verb and select a tense to see conjugation</p>
+                        </div>
+                    </div>
                 </div>
-            </div>`;
-        } else {
-            html += `<div class="card"><h2>${block.header}</h2>`;
-            block.subsections.forEach(sub => {
-                html += `<h3>${sub.title}</h3><div class="tense-grid">`;
-                sub.tenses.forEach(tense => {
-                    html += `<div class="table-wrapper">
-                        <div class="tense-name">${labels[tense] || tense}</div>
-                        <table class="cj-table"><tbody>`;
-                    pronouns.forEach((p, idx) => {
-                        // 逻辑：如果是拉美模式，且index是4(Vosotros)，则不渲染此行
-                        if (isLatamMode && idx === 4) return;
+            </div>
+        </section>
 
-                        if ((tense === 'imp_af' || tense === 'imp_neg') && idx === 0) return;
-                        let res = conjugate(verb, tense, idx);
-                        html += `<tr><td class="pronoun">${p}</td><td class="verb-form">${res}</td></tr>`;
-                    });
-                    html += `</tbody></table></div>`;
-                });
-                html += `</div>`;
+        <!-- Practice Section -->
+        <section id="practice" class="mb-16">
+            <h2 class="section-title">Practice Conjugations</h2>
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="mb-6">
+                    <h3 class="font-bold text-lg mb-4">Practice Settings</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label for="practice-tense" class="block text-dark-text font-medium mb-2">Tense:</label>
+                            <select id="practice-tense" class="input-field w-full">
+                                <option value="all">All Tenses</option>
+                                <option value="present">Present Indicative</option>
+                                <option value="preterite">Preterite</option>
+                                <option value="imperfect">Imperfect</option>
+                                <option value="future">Future</option>
+                                <option value="conditional">Conditional</option>
+                                <option value="present_subjunctive">Present Subjunctive</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="practice-person" class="block text-dark-text font-medium mb-2">Person:</label>
+                            <select id="practice-person" class="input-field w-full">
+                                <option value="all">All Persons</option>
+                                <option value="yo">Yo (I)</option>
+                                <option value="tu">Tú (You)</option>
+                                <option value="el">Él/Ella/Usted (He/She/You formal)</option>
+                                <option value="nosotros">Nosotros/Nosotras (We)</option>
+                                <option value="vosotros">Vosotros/Vosotras (You plural)</option>
+                                <option value="ellos">Ellos/Ellas/Ustedes (They/You plural formal)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="practice-difficulty" class="block text-dark-text font-medium mb-2">Difficulty:</label>
+                            <select id="practice-difficulty" class="input-field w-full">
+                                <option value="beginner">Beginner (Regular verbs only)</option>
+                                <option value="intermediate">Intermediate (Common irregular verbs)</option>
+                                <option value="advanced">Advanced (All verbs including rare ones)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-4 text-center">
+                        <button id="start-practice-btn" class="btn-primary text-lg">
+                            <i class="fa fa-play mr-2"></i>Start Practice
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="practice-area" class="hidden">
+                    <div class="bg-light-bg rounded-lg p-6 mb-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <p class="text-sm text-gray-600">Question <span id="question-number">1</span>/<span id="total-questions">10</span></p>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <span class="font-medium">Verb:</span>
+                                    <span id="practice-verb" class="font-bold text-lg">hablar</span>
+                                </div>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <span class="font-medium">Tense:</span>
+                                    <span id="practice-verb-tense">Present Indicative</span>
+                                </div>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <span class="font-medium">Person:</span>
+                                    <span id="practice-verb-person">Yo (I)</span>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-600">Score</p>
+                                <p id="practice-score" class="font-bold text-xl">0</p>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="practice-answer" class="block text-dark-text font-medium mb-2">Your answer:</label>
+                            <input type="text" id="practice-answer" class="input-field w-full" placeholder="Type the conjugated verb here" autocomplete="off">
+                            <p class="text-xs text-gray-500 mt-1">Strict Mode: Accents matter! (e.g., habló ≠ hablo)</p>
+                        </div>
+                        
+                        <div class="flex justify-between">
+                            <button id="skip-btn" class="bg-gray-200 text-dark-text font-medium py-2 px-4 rounded-lg shadow hover:bg-gray-300 transition-all duration-300">
+                                Skip
+                            </button>
+                            <button id="check-answer-btn" class="btn-primary">
+                                Check Answer
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="feedback-area" class="hidden mb-6 p-4 rounded-lg">
+                        <!-- Feedback will be inserted here -->
+                    </div>
+                    
+                    <div class="flex justify-between">
+                        <button id="end-practice-btn" class="bg-gray-200 text-dark-text font-medium py-2 px-4 rounded-lg shadow hover:bg-gray-300 transition-all duration-300">
+                            End Practice
+                        </button>
+                        <button id="next-question-btn" class="btn-secondary hidden">
+                            Next Question
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="practice-placeholder" class="flex flex-col items-center justify-center py-12 text-gray-500">
+                    <div class="text-6xl text-gray-300 mb-4">
+                        <i class="fa fa-graduation-cap"></i>
+                    </div>
+                    <p class="text-center">Configure your practice settings and click "Start Practice" to begin</p>
+                </div>
+                
+                <div id="practice-results" class="hidden">
+                    <h3 class="font-bold text-xl mb-4 text-center">Practice Results</h3>
+                    <div class="bg-light-bg rounded-lg p-6 mb-6">
+                        <div class="flex justify-center mb-6">
+                            <div class="w-40 h-40 relative">
+                                <canvas id="results-chart"></canvas>
+                                <div class="absolute inset-0 flex items-center justify-center flex-col">
+                                    <span id="results-score" class="text-4xl font-bold">80%</span>
+                                    <span class="text-sm text-gray-600">Correct</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <h4 class="font-medium mb-2">Statistics</h4>
+                                <p><span class="font-medium">Total Questions:</span> <span id="results-total">10</span></p>
+                                <p><span class="font-medium">Correct Answers:</span> <span id="results-correct">8</span></p>
+                                <p><span class="font-medium">Incorrect Answers:</span> <span id="results-incorrect">2</span></p>
+                                <p><span class="font-medium">Skipped Questions:</span> <span id="results-skipped">0</span></p>
+                            </div>
+                            
+                            <div>
+                                <h4 class="font-medium mb-2">Areas to Improve</h4>
+                                <ul id="results-improvements" class="list-disc list-inside text-sm">
+                                    <!-- Improvement suggestions will be inserted here -->
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between">
+                        <button id="review-mistakes-btn" class="bg-gray-200 text-dark-text font-medium py-2 px-4 rounded-lg shadow hover:bg-gray-300 transition-all duration-300">
+                            Review Mistakes
+                        </button>
+                        <button id="restart-practice-btn" class="btn-primary">
+                            Start New Practice
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Progress Section -->
+        <section id="progress" class="mb-16">
+            <h2 class="section-title">Your Progress</h2>
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="font-bold text-lg mb-4">Tense Mastery</h3>
+                        <div class="h-64">
+                            <canvas id="tense-mastery-chart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="font-bold text-lg mb-4">Common Mistakes</h3>
+                        <div class="bg-light-bg rounded-lg p-4">
+                            <ul id="common-mistakes-list" class="space-y-3">
+                                <!-- Mistakes will be populated via JS -->
+                            </ul>
+                        </div>
+                        
+                        <h3 class="font-bold text-lg mt-6 mb-4">Recent Activities</h3>
+                        <div class="bg-light-bg rounded-lg p-4">
+                            <ul class="space-y-2">
+                                <li class="flex items-center gap-3">
+                                    <div class="bg-spanish-red bg-opacity-20 p-2 rounded-full">
+                                        <i class="fa fa-check text-spanish-red"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium">Completed present tense practice</p>
+                                        <p class="text-xs text-gray-600">Today, 10:23 AM</p>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8">
+                    <h3 class="font-bold text-lg mb-4">Recommended Practice</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="recommendations-container">
+                        <!-- Recommendations will be inserted here -->
+                         <div class="bg-light-bg rounded-lg p-4 card-hover">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="bg-red-100 p-2 rounded-full">
+                                    <i class="fa fa-exclamation-triangle text-red-600"></i>
+                                </div>
+                                <h4 class="font-bold">Past Tense Review</h4>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-4">Focus on distinguishing between preterite and imperfect past tenses.</p>
+                            <button class="btn-primary w-full">Start Practice</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Rules Section -->
+        <section id="rules" class="mb-16">
+            <h2 class="section-title">Conjugation Rules</h2>
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-lg">Basic Conjugation Patterns</h3>
+                        <div class="flex gap-2">
+                            <button class="verb-type-btn bg-spanish-red text-white px-3 py-1 rounded-full text-sm" data-type="ar">
+                                -AR verbs
+                            </button>
+                            <button class="verb-type-btn bg-gray-200 text-dark-text px-3 py-1 rounded-full text-sm" data-type="er">
+                                -ER verbs
+                            </button>
+                            <button class="verb-type-btn bg-gray-200 text-dark-text px-3 py-1 rounded-full text-sm" data-type="ir">
+                                -IR verbs
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="verb-rules-content">
+                        <!-- AR verbs content (default) -->
+                        <div id="ar-verbs-content">
+                            <h4 class="font-medium mb-2">Regular -AR Verbs</h4>
+                            <p class="mb-4">The largest group of Spanish verbs, ending in -ar in their infinitive form (e.g., hablar, cantar, bailar).</p>
+                            
+                            <div class="overflow-x-auto mb-6">
+                                <table class="w-full border-collapse">
+                                    <thead>
+                                        <tr class="bg-spanish-red bg-opacity-10">
+                                            <th class="border border-gray-200 px-4 py-2 text-left">Tense</th>
+                                            <th class="border border-gray-200 px-4 py-2 text-left">Yo</th>
+                                            <th class="border border-gray-200 px-4 py-2 text-left">Tú</th>
+                                            <th class="border border-gray-200 px-4 py-2 text-left">Él/Ella</th>
+                                            <th class="border border-gray-200 px-4 py-2 text-left">Nosotros</th>
+                                            <th class="border border-gray-200 px-4 py-2 text-left">Vosotros</th>
+                                            <th class="border border-gray-200 px-4 py-2 text-left">Ellos/Ellas</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="border border-gray-200 px-4 py-2 font-medium">Present</td>
+                                            <td class="border border-gray-200 px-4 py-2">-o</td>
+                                            <td class="border border-gray-200 px-4 py-2">-as</td>
+                                            <td class="border border-gray-200 px-4 py-2">-a</td>
+                                            <td class="border border-gray-200 px-4 py-2">-amos</td>
+                                            <td class="border border-gray-200 px-4 py-2">-áis</td>
+                                            <td class="border border-gray-200 px-4 py-2">-an</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- ER verbs content -->
+                        <div id="er-verbs-content" class="hidden">
+                            <h4 class="font-medium mb-2">Regular -ER Verbs</h4>
+                            <p class="mb-4">Verbs ending in -er in their infinitive form (e.g., comer, beber, leer).</p>
+                             <div class="overflow-x-auto mb-6">
+                                <table class="w-full border-collapse">
+                                    <thead>
+                                        <tr class="bg-spanish-red bg-opacity-10">
+                                            <th class="border border-gray-200 px-4 py-2 text-left">Tense</th>
+                                            <th class="border border-gray-200 px-4 py-2 text-left">Yo</th>
+                                            <th class="border border-gray-200 px-4 py-2 text-left">Tú</th>
+                                            <th class="border border-gray-200 px-4 py-2 text-left">Él/Ella</th>
+                                            <th class="border border-gray-200 px-4 py-2 text-left">Nosotros</th>
+                                            <th class="border border-gray-200 px-4 py-2 text-left">Vosotros</th>
+                                            <th class="border border-gray-200 px-4 py-2 text-left">Ellos/Ellas</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="border border-gray-200 px-4 py-2 font-medium">Present</td>
+                                            <td class="border border-gray-200 px-4 py-2">-o</td>
+                                            <td class="border border-gray-200 px-4 py-2">-es</td>
+                                            <td class="border border-gray-200 px-4 py-2">-e</td>
+                                            <td class="border border-gray-200 px-4 py-2">-emos</td>
+                                            <td class="border border-gray-200 px-4 py-2">-éis</td>
+                                            <td class="border border-gray-200 px-4 py-2">-en</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- IR verbs content -->
+                        <div id="ir-verbs-content" class="hidden">
+                            <h4 class="font-medium mb-2">Regular -IR Verbs</h4>
+                            <p class="mb-4">Verbs ending in -ir in their infinitive form (e.g., vivir, escribir, abrir).</p>
+                             <div class="overflow-x-auto mb-6">
+                                <table class="w-full border-collapse">
+                                    <thead>
+                                        <tr class="bg-spanish-red bg-opacity-10">
+                                            <th class="border border-gray-200 px-4 py-2 text-left">Tense</th>
+                                            <th class="border border-gray-200 px-4 py-2 text-left">Yo</th>
+                                            <th class="border border-gray-200 px-4 py-2 text-left">Tú</th>
+                                            <th class="border border-gray-200 px-4 py-2 text-left">Él/Ella</th>
+                                            <th class="border border-gray-200 px-4 py-2 text-left">Nosotros</th>
+                                            <th class="border border-gray-200 px-4 py-2 text-left">Vosotros</th>
+                                            <th class="border border-gray-200 px-4 py-2 text-left">Ellos/Ellas</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="border border-gray-200 px-4 py-2 font-medium">Present</td>
+                                            <td class="border border-gray-200 px-4 py-2">-o</td>
+                                            <td class="border border-gray-200 px-4 py-2">-es</td>
+                                            <td class="border border-gray-200 px-4 py-2">-e</td>
+                                            <td class="border border-gray-200 px-4 py-2">-imos</td>
+                                            <td class="border border-gray-200 px-4 py-2">-ís</td>
+                                            <td class="border border-gray-200 px-4 py-2">-en</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark-text text-white py-8">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-4">Spanish Verb Conjugator</h3>
+                    <p class="text-gray-400">A comprehensive tool to help you learn and master Spanish verb conjugations.</p>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-bold mb-4">Quick Links</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#conjugator" class="text-gray-400 hover:text-white transition-colors">Conjugator</a></li>
+                        <li><a href="#practice" class="text-gray-400 hover:text-white transition-colors">Practice</a></li>
+                        <li><a href="#progress" class="text-gray-400 hover:text-white transition-colors">Progress</a></li>
+                        <li><a href="#rules" class="text-gray-400 hover:text-white transition-colors">Rules</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-bold mb-4">Resources</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Spanish Grammar Guide</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Learning Tips</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400">
+                <p>&copy; 2025 Spanish Verb Conjugator. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- SCRIPT SECTION: Consolidated and Fixed -->
+    <script>
+    /**
+     * VERBS.JS CONTENT
+     */
+    // Verb categories
+    const VERB_TYPES = {
+        AR: 'ar',
+        ER: 'er',
+        IR: 'ir'
+    };
+
+    // Tenses
+    const TENSES = {
+        PRESENT: 'present',
+        PRETERITE: 'preterite',
+        IMPERFECT: 'imperfect',
+        FUTURE: 'future',
+        CONDITIONAL: 'conditional',
+        PRESENT_SUBJUNCTIVE: 'present_subjunctive',
+        IMPERFECT_SUBJUNCTIVE: 'imperfect_subjunctive',
+        IMPERATIVE: 'imperative'
+    };
+
+    // Tense display names
+    const TENSE_NAMES = {
+        present: 'Present Indicative',
+        preterite: 'Preterite',
+        imperfect: 'Imperfect',
+        future: 'Future',
+        conditional: 'Conditional',
+        present_subjunctive: 'Present Subjunctive',
+        imperfect_subjunctive: 'Imperfect Subjunctive',
+        imperative: 'Imperative'
+    };
+
+    // Persons
+    const PERSONS = {
+        YO: 'yo',
+        TU: 'tu',
+        EL: 'el',
+        NOSOTROS: 'nosotros',
+        VOSOTROS: 'vosotros',
+        ELLOS: 'ellos'
+    };
+
+    // Person display names
+    const PERSON_NAMES = {
+        yo: 'Yo (I)',
+        tu: 'Tú (You)',
+        el: 'Él/Ella/Usted (He/She/You formal)',
+        nosotros: 'Nosotros/Nosotras (We)',
+        vosotros: 'Vosotros/Vosotras (You plural)',
+        ellos: 'Ellos/Ellas/Ustedes (They/You plural formal)'
+    };
+
+    // Regular verb endings by type and tense
+    const REGULAR_ENDINGS = {
+        [VERB_TYPES.AR]: {
+            [TENSES.PRESENT]: ['o', 'as', 'a', 'amos', 'áis', 'an'],
+            [TENSES.PRETERITE]: ['é', 'aste', 'ó', 'amos', 'asteis', 'aron'],
+            [TENSES.IMPERFECT]: ['aba', 'abas', 'aba', 'ábamos', 'abais', 'aban'],
+            [TENSES.FUTURE]: ['aré', 'arás', 'ará', 'aremos', 'aréis', 'arán'],
+            [TENSES.CONDITIONAL]: ['aría', 'arías', 'aría', 'aríamos', 'aríais', 'arían'],
+            [TENSES.PRESENT_SUBJUNCTIVE]: ['e', 'es', 'e', 'emos', 'éis', 'en'],
+            [TENSES.IMPERFECT_SUBJUNCTIVE]: ['ara', 'aras', 'ara', 'áramos', 'arais', 'aran'],
+            [TENSES.IMPERATIVE]: ['', 'a', 'e', 'emos', 'ad', 'en']
+        },
+        [VERB_TYPES.ER]: {
+            [TENSES.PRESENT]: ['o', 'es', 'e', 'emos', 'éis', 'en'],
+            [TENSES.PRETERITE]: ['í', 'iste', 'ió', 'imos', 'isteis', 'ieron'],
+            [TENSES.IMPERFECT]: ['ía', 'ías', 'ía', 'íamos', 'íais', 'ían'],
+            [TENSES.FUTURE]: ['eré', 'erás', 'erá', 'eremos', 'eréis', 'erán'],
+            [TENSES.CONDITIONAL]: ['ería', 'erías', 'ería', 'eríamos', 'eríais', 'erían'],
+            [TENSES.PRESENT_SUBJUNCTIVE]: ['a', 'as', 'a', 'amos', 'áis', 'an'],
+            [TENSES.IMPERFECT_SUBJUNCTIVE]: ['iera', 'ieras', 'iera', 'iéramos', 'ierais', 'ieran'],
+            [TENSES.IMPERATIVE]: ['', 'e', 'a', 'amos', 'ed', 'an']
+        },
+        [VERB_TYPES.IR]: {
+            [TENSES.PRESENT]: ['o', 'es', 'e', 'imos', 'ís', 'en'],
+            [TENSES.PRETERITE]: ['í', 'iste', 'ió', 'imos', 'isteis', 'ieron'],
+            [TENSES.IMPERFECT]: ['ía', 'ías', 'ía', 'íamos', 'íais', 'ían'],
+            [TENSES.FUTURE]: ['iré', 'irás', 'irá', 'iremos', 'iréis', 'irán'],
+            [TENSES.CONDITIONAL]: ['iría', 'irías', 'iría', 'iríamos', 'iríais', 'irían'],
+            [TENSES.PRESENT_SUBJUNCTIVE]: ['a', 'as', 'a', 'amos', 'áis', 'an'],
+            [TENSES.IMPERFECT_SUBJUNCTIVE]: ['iera', 'ieras', 'iera', 'iéramos', 'ierais', 'ieran'],
+            [TENSES.IMPERATIVE]: ['', 'e', 'a', 'amos', 'id', 'an']
+        }
+    };
+
+    // Common verbs
+    const COMMON_VERBS = [
+        { infinitive: 'hablar', translation: 'to speak', type: VERB_TYPES.AR },
+        { infinitive: 'comer', translation: 'to eat', type: VERB_TYPES.ER },
+        { infinitive: 'vivir', translation: 'to live', type: VERB_TYPES.IR },
+        { infinitive: 'amar', translation: 'to love', type: VERB_TYPES.AR },
+        { infinitive: 'trabajar', translation: 'to work', type: VERB_TYPES.AR },
+        { infinitive: 'estudiar', translation: 'to study', type: VERB_TYPES.AR },
+        { infinitive: 'aprender', translation: 'to learn', type: VERB_TYPES.ER },
+        { infinitive: 'beber', translation: 'to drink', type: VERB_TYPES.ER },
+        { infinitive: 'leer', translation: 'to read', type: VERB_TYPES.ER },
+        { infinitive: 'escribir', translation: 'to write', type: VERB_TYPES.IR },
+        { infinitive: 'abrir', translation: 'to open', type: VERB_TYPES.IR },
+        { infinitive: 'caminar', translation: 'to walk', type: VERB_TYPES.AR },
+        { infinitive: 'correr', translation: 'to run', type: VERB_TYPES.ER },
+        { infinitive: 'saltar', translation: 'to jump', type: VERB_TYPES.AR },
+        { infinitive: 'bailar', translation: 'to dance', type: VERB_TYPES.AR },
+        { infinitive: 'cantar', translation: 'to sing', type: VERB_TYPES.AR },
+        { infinitive: 'pintar', translation: 'to paint', type: VERB_TYPES.AR },
+        { infinitive: 'jugar', translation: 'to play', type: VERB_TYPES.AR },
+        { infinitive: 'mirar', translation: 'to look at', type: VERB_TYPES.AR },
+        { infinitive: 'escuchar', translation: 'to listen', type: VERB_TYPES.AR }
+    ];
+
+    // Irregular verbs
+    const IRREGULAR_VERBS = {
+        ser: {
+            translation: 'to be (permanent)',
+            type: 'irregular',
+            conjugations: {
+                [TENSES.PRESENT]: ['soy', 'eres', 'es', 'somos', 'sois', 'son'],
+                [TENSES.PRETERITE]: ['fui', 'fuiste', 'fue', 'fuimos', 'fuisteis', 'fueron'],
+                [TENSES.IMPERFECT]: ['era', 'eras', 'era', 'éramos', 'erais', 'eran'],
+                [TENSES.FUTURE]: ['seré', 'serás', 'será', 'seremos', 'seréis', 'serán'],
+                [TENSES.CONDITIONAL]: ['sería', 'serías', 'sería', 'seríamos', 'seríais', 'serían'],
+                [TENSES.PRESENT_SUBJUNCTIVE]: ['sea', 'seas', 'sea', 'seamos', 'seáis', 'sean'],
+                [TENSES.IMPERFECT_SUBJUNCTIVE]: ['fuera', 'fueras', 'fuera', 'fuéramos', 'fuerais', 'fueran'],
+                [TENSES.IMPERATIVE]: ['', 'sé', 'sea', 'seamos', 'sed', 'sean']
+            }
+        },
+        estar: {
+            translation: 'to be (temporary/location)',
+            type: 'irregular',
+            conjugations: {
+                [TENSES.PRESENT]: ['estoy', 'estás', 'está', 'estamos', 'estáis', 'están'],
+                [TENSES.PRETERITE]: ['estuve', 'estuviste', 'estuvo', 'estuvimos', 'estuvisteis', 'estuvieron'],
+                [TENSES.IMPERFECT]: ['estaba', 'estabas', 'estaba', 'estábamos', 'estabais', 'estaban'],
+                [TENSES.FUTURE]: ['estaré', 'estarás', 'estará', 'estaremos', 'estaréis', 'estarán'],
+                [TENSES.CONDITIONAL]: ['estaría', 'estarías', 'estaría', 'estaríamos', 'estaríais', 'estarían'],
+                [TENSES.PRESENT_SUBJUNCTIVE]: ['esté', 'estés', 'esté', 'estemos', 'estéis', 'estén'],
+                [TENSES.IMPERFECT_SUBJUNCTIVE]: ['estuviera', 'estuvieras', 'estuviera', 'estuviéramos', 'estuvierais', 'estuvieran'],
+                [TENSES.IMPERATIVE]: ['', 'está', 'esté', 'estemos', 'estad', 'estén']
+            }
+        },
+        ir: {
+            translation: 'to go',
+            type: 'irregular',
+            conjugations: {
+                [TENSES.PRESENT]: ['voy', 'vas', 'va', 'vamos', 'vais', 'van'],
+                [TENSES.PRETERITE]: ['fui', 'fuiste', 'fue', 'fuimos', 'fuisteis', 'fueron'],
+                [TENSES.IMPERFECT]: ['iba', 'ibas', 'iba', 'íbamos', 'ibais', 'iban'],
+                [TENSES.FUTURE]: ['iré', 'irás', 'irá', 'iremos', 'iréis', 'irán'],
+                [TENSES.CONDITIONAL]: ['iría', 'irías', 'iría', 'iríamos', 'iríais', 'irían'],
+                [TENSES.PRESENT_SUBJUNCTIVE]: ['vaya', 'vayas', 'vaya', 'vayamos', 'vayáis', 'vayan'],
+                [TENSES.IMPERFECT_SUBJUNCTIVE]: ['fuera', 'fueras', 'fuera', 'fuéramos', 'fuerais', 'fueran'],
+                [TENSES.IMPERATIVE]: ['', 've', 'vaya', 'vamos', 'id', 'vayan']
+            }
+        },
+        tener: {
+            translation: 'to have',
+            type: 'irregular',
+            conjugations: {
+                [TENSES.PRESENT]: ['tengo', 'tienes', 'tiene', 'tenemos', 'tenéis', 'tienen'],
+                [TENSES.PRETERITE]: ['tuve', 'tuviste', 'tuvo', 'tuvimos', 'tuvisteis', 'tuvieron'],
+                [TENSES.IMPERFECT]: ['tenía', 'tenías', 'tenía', 'teníamos', 'teníais', 'tenían'],
+                [TENSES.FUTURE]: ['tendré', 'tendrás', 'tendrá', 'tendremos', 'tendréis', 'tendrán'],
+                [TENSES.CONDITIONAL]: ['tendría', 'tendrías', 'tendría', 'tendríamos', 'tendríais', 'tendrían'],
+                [TENSES.PRESENT_SUBJUNCTIVE]: ['tenga', 'tengas', 'tenga', 'tengamos', 'tengáis', 'tengan'],
+                [TENSES.IMPERFECT_SUBJUNCTIVE]: ['tuviera', 'tuvieras', 'tuviera', 'tuviéramos', 'tuvierais', 'tuvieran'],
+                [TENSES.IMPERATIVE]: ['', 'ten', 'tenga', 'tengamos', 'tened', 'tengan']
+            }
+        },
+        haber: {
+            translation: 'to have (auxiliary)',
+            type: 'irregular',
+            conjugations: {
+                [TENSES.PRESENT]: ['he', 'has', 'ha', 'hemos', 'habéis', 'han'],
+                [TENSES.PRETERITE]: ['hube', 'hubiste', 'hubo', 'hubimos', 'hubisteis', 'hubieron'],
+                [TENSES.IMPERFECT]: ['había', 'habías', 'había', 'habíamos', 'habíais', 'habían'],
+                [TENSES.FUTURE]: ['habré', 'habrás', 'habrá', 'habremos', 'habréis', 'habrán'],
+                [TENSES.CONDITIONAL]: ['habría', 'habrías', 'habría', 'habríamos', 'habríais', 'habrían'],
+                [TENSES.PRESENT_SUBJUNCTIVE]: ['haya', 'hayas', 'haya', 'hayamos', 'hayáis', 'hayan'],
+                [TENSES.IMPERFECT_SUBJUNCTIVE]: ['hubiera', 'hubieras', 'hubiera', 'hubiéramos', 'hubierais', 'hubieran'],
+                [TENSES.IMPERATIVE]: ['', '', '', '', '', ''] // Special case handled in practice logic
+            }
+        },
+        hacer: {
+            translation: 'to do/make',
+            type: 'irregular',
+            conjugations: {
+                [TENSES.PRESENT]: ['hago', 'haces', 'hace', 'hacemos', 'hacéis', 'hacen'],
+                [TENSES.PRETERITE]: ['hice', 'hiciste', 'hizo', 'hicimos', 'hicisteis', 'hicieron'],
+                [TENSES.IMPERFECT]: ['hacía', 'hacías', 'hacía', 'hacíamos', 'hacíais', 'hacían'],
+                [TENSES.FUTURE]: ['haré', 'harás', 'hará', 'haremos', 'haréis', 'harán'],
+                [TENSES.CONDITIONAL]: ['haría', 'harías', 'haría', 'haríamos', 'haríais', 'harían'],
+                [TENSES.PRESENT_SUBJUNCTIVE]: ['haga', 'hagas', 'haga', 'hagamos', 'hagáis', 'hagan'],
+                [TENSES.IMPERFECT_SUBJUNCTIVE]: ['hiciera', 'hicieras', 'hiciera', 'hiciéramos', 'hicierais', 'hicieran'],
+                [TENSES.IMPERATIVE]: ['', 'haz', 'haga', 'hagamos', 'haced', 'hagan']
+            }
+        }
+    };
+
+    function getAllVerbs() {
+        const allVerbs = [...COMMON_VERBS];
+        Object.keys(IRREGULAR_VERBS).forEach(verb => {
+            allVerbs.push({
+                infinitive: verb,
+                translation: IRREGULAR_VERBS[verb].translation,
+                type: IRREGULAR_VERBS[verb].type
             });
-            html += `</div>`;
+        });
+        return allVerbs;
+    }
+
+    function getVerb(infinitive) {
+        if (IRREGULAR_VERBS[infinitive]) {
+            return {
+                infinitive: infinitive,
+                translation: IRREGULAR_VERBS[infinitive].translation,
+                type: IRREGULAR_VERBS[infinitive].type
+            };
+        }
+        const commonVerb = COMMON_VERBS.find(verb => verb.infinitive === infinitive);
+        if (commonVerb) return commonVerb;
+        
+        if (infinitive.endsWith('ar')) return { infinitive, translation: '', type: VERB_TYPES.AR };
+        if (infinitive.endsWith('er')) return { infinitive, translation: '', type: VERB_TYPES.ER };
+        if (infinitive.endsWith('ir')) return { infinitive, translation: '', type: VERB_TYPES.IR };
+        
+        return null;
+    }
+
+    function getVerbTypeName(type) {
+        switch (type) {
+            case VERB_TYPES.AR: return '-AR verb';
+            case VERB_TYPES.ER: return '-ER verb';
+            case VERB_TYPES.IR: return '-IR verb';
+            case 'irregular': return 'Irregular verb';
+            case 'stem-changing': return 'Stem-changing verb';
+            default: return 'Unknown type';
+        }
+    }
+
+    const VerbsData = {
+        VERB_TYPES, TENSES, TENSE_NAMES, PERSONS, PERSON_NAMES, REGULAR_ENDINGS, COMMON_VERBS, IRREGULAR_VERBS,
+        getAllVerbs, getVerb, getVerbTypeName
+    };
+
+    /**
+     * CONJUGATOR.JS CONTENT (FIXED: STRICT MODE)
+     */
+    function normalizeText(text) {
+        return text
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/ñ/g, 'n')
+            .replace(/Ñ/g, 'N');
+    }
+
+    function conjugateVerb(verb, tense) {
+        const normalizedVerb = normalizeText(verb.toLowerCase().trim());
+        const verbData = getVerb(normalizedVerb);
+        if (!verbData) return null;
+        
+        if (IRREGULAR_VERBS[normalizedVerb] && IRREGULAR_VERBS[normalizedVerb].conjugations[tense]) {
+            return IRREGULAR_VERBS[normalizedVerb].conjugations[tense];
+        }
+        
+        if (verbData.type === VERB_TYPES.AR || verbData.type === VERB_TYPES.ER || verbData.type === VERB_TYPES.IR) {
+            return conjugateRegularVerb(normalizedVerb, verbData.type, tense);
+        }
+        return null;
+    }
+
+    function conjugateRegularVerb(verb, verbType, tense) {
+        let stem = verb.slice(0, -2);
+        const endings = REGULAR_ENDINGS[verbType][tense];
+        if (!endings) return null;
+        return endings.map(ending => stem + ending);
+    }
+
+    // UPDATED: Strict check for accents
+    function checkConjugation(userAnswer, correctConjugation) {
+        // Teacher Mode: Strict! 'habló' is NOT 'hablo'
+        return userAnswer.trim().toLowerCase() === correctConjugation.trim().toLowerCase();
+    }
+
+    function getRandomVerb(difficulty = 'beginner') {
+        let verbs = [];
+        switch (difficulty) {
+            case 'beginner':
+                verbs = COMMON_VERBS.filter(verb => verb.type === VERB_TYPES.AR || verb.type === VERB_TYPES.ER || verb.type === VERB_TYPES.IR);
+                break;
+            case 'intermediate':
+                verbs = [...COMMON_VERBS, ...Object.keys(IRREGULAR_VERBS).slice(0, 3).map(k => ({infinitive: k, ...IRREGULAR_VERBS[k]}))];
+                break;
+            case 'advanced':
+                verbs = getAllVerbs();
+                break;
+            default:
+                verbs = COMMON_VERBS;
+        }
+        const randomIndex = Math.floor(Math.random() * verbs.length);
+        return verbs[randomIndex];
+    }
+
+    function getRandomTense(tenseFilter = 'all') {
+        const tenses = [];
+        if (tenseFilter === 'all') {
+            tenses.push(TENSES.PRESENT, TENSES.PRETERITE, TENSES.IMPERFECT, TENSES.FUTURE, TENSES.CONDITIONAL, TENSES.PRESENT_SUBJUNCTIVE);
+        } else {
+            tenses.push(tenseFilter);
+        }
+        return tenses[Math.floor(Math.random() * tenses.length)];
+    }
+
+    function getRandomPerson(personFilter = 'all') {
+        const persons = [];
+        if (personFilter === 'all') {
+            persons.push('yo', 'tu', 'el', 'nosotros', 'vosotros', 'ellos');
+        } else {
+            persons.push(personFilter);
+        }
+        return persons[Math.floor(Math.random() * persons.length)];
+    }
+
+    // UPDATED: Recursive check for empty answers
+    function generatePracticeQuestion(options = {}) {
+        const { tense = 'all', person = 'all', difficulty = 'beginner' } = options;
+        const verb = getRandomVerb(difficulty);
+        const questionTense = getRandomTense(tense);
+        const questionPerson = getRandomPerson(person);
+        const personIndex = ['yo', 'tu', 'el', 'nosotros', 'vosotros', 'ellos'].indexOf(questionPerson);
+        const conjugations = conjugateVerb(verb.infinitive, questionTense);
+        
+        // If conjugation fails OR results in empty string (like haber imperative), regenerate
+        if (!conjugations || conjugations[personIndex] === '') {
+            return generatePracticeQuestion(options);
+        }
+        
+        return {
+            verb: verb.infinitive,
+            verbTranslation: verb.translation,
+            tense: questionTense,
+            person: questionPerson,
+            correctAnswer: conjugations[personIndex],
+            conjugations: conjugations
+        };
+    }
+
+    const Conjugator = {
+        conjugateVerb, checkConjugation, generatePracticeQuestion, normalizeText
+    };
+
+    /**
+     * PROGRESS.JS CONTENT (FIXED: Variable Definitions)
+     */
+    // Fixed: Import TENSE_NAMES locally
+    const { TENSE_NAMES: PROG_TENSE_NAMES } = VerbsData; 
+
+    const defaultProgressData = {
+        tenseMastery: {
+            present: { total: 0, correct: 0, percentage: 0 },
+            preterite: { total: 0, correct: 0, percentage: 0 },
+            imperfect: { total: 0, correct: 0, percentage: 0 },
+            future: { total: 0, correct: 0, percentage: 0 },
+            conditional: { total: 0, correct: 0, percentage: 0 },
+            present_subjunctive: { total: 0, correct: 0, percentage: 0 },
+            imperfect_subjunctive: { total: 0, correct: 0, percentage: 0 },
+            imperative: { total: 0, correct: 0, percentage: 0 }
+        },
+        commonMistakes: [],
+        recentActivities: [],
+        streak: 0,
+        lastPracticeDate: null
+    };
+
+    function getProgressData() {
+        const progressData = localStorage.getItem('spanishVerbConjugatorProgress');
+        return progressData ? JSON.parse(progressData) : { ...defaultProgressData };
+    }
+
+    function saveProgressData(progressData) {
+        localStorage.setItem('spanishVerbConjugatorProgress', JSON.stringify(progressData));
+    }
+
+    function updateTenseMastery(tense, isCorrect) {
+        const progressData = getProgressData();
+        if (progressData.tenseMastery[tense]) {
+            progressData.tenseMastery[tense].total++;
+            if (isCorrect) progressData.tenseMastery[tense].correct++;
+            progressData.tenseMastery[tense].percentage = Math.round((progressData.tenseMastery[tense].correct / progressData.tenseMastery[tense].total) * 100);
+        }
+        saveProgressData(progressData);
+        return progressData.tenseMastery;
+    }
+
+    function addMistake(mistake) {
+        const progressData = getProgressData();
+        const mistakeKey = `${mistake.verb}-${mistake.tense}-${mistake.person}`;
+        const existingMistakeIndex = progressData.commonMistakes.findIndex(m => m.key === mistakeKey);
+        
+        if (existingMistakeIndex >= 0) {
+            progressData.commonMistakes[existingMistakeIndex].count++;
+        } else {
+            progressData.commonMistakes.push({
+                key: mistakeKey, verb: mistake.verb, tense: mistake.tense, person: mistake.person,
+                count: 1, lastOccurred: new Date().toISOString()
+            });
+        }
+        progressData.commonMistakes.sort((a, b) => b.count - a.count);
+        if (progressData.commonMistakes.length > 10) progressData.commonMistakes = progressData.commonMistakes.slice(0, 10);
+        saveProgressData(progressData);
+        return progressData.commonMistakes;
+    }
+
+    function addActivity(type, description) {
+        const progressData = getProgressData();
+        progressData.recentActivities.unshift({ type, description, timestamp: new Date().toISOString() });
+        if (progressData.recentActivities.length > 10) progressData.recentActivities.pop();
+        updateStreak();
+        saveProgressData(progressData);
+        return progressData.recentActivities;
+    }
+
+    function updateStreak() {
+        const progressData = getProgressData();
+        const today = new Date().toDateString();
+        const lastPracticeDate = progressData.lastPracticeDate ? new Date(progressData.lastPracticeDate).toDateString() : null;
+        
+        if (lastPracticeDate !== today) {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            if (lastPracticeDate === yesterday.toDateString()) {
+                progressData.streak++;
+            } else if (lastPracticeDate !== today) {
+                progressData.streak = 1;
+            }
+            progressData.lastPracticeDate = new Date().toISOString();
+        }
+        return progressData.streak;
+    }
+
+    function getRecommendedPractice() {
+        const progressData = getProgressData();
+        const recommendations = [];
+        const tenseMasteryArray = Object.entries(progressData.tenseMastery)
+            .filter(([_, data]) => data.total > 0)
+            .sort((a, b) => a[1].percentage - b[1].percentage);
+        
+        tenseMasteryArray.slice(0, 3).forEach(([tense, data]) => {
+            recommendations.push({
+                type: 'tense', tense, title: `${PROG_TENSE_NAMES[tense]} Review`,
+                description: `You're struggling with the ${PROG_TENSE_NAMES[tense]} tense (${data.percentage}% accuracy).`,
+                priority: 'high'
+            });
+        });
+        
+        if (progressData.commonMistakes.length > 0) {
+             progressData.commonMistakes.slice(0, 2).forEach(mistake => {
+                recommendations.push({
+                    type: 'verb', verb: mistake.verb, tense: mistake.tense,
+                    title: `${mistake.verb.charAt(0).toUpperCase() + mistake.verb.slice(1)} Practice`,
+                    description: `You often make mistakes with "${mistake.verb}" in the ${PROG_TENSE_NAMES[mistake.tense]} tense.`,
+                    priority: 'medium'
+                });
+            });
+        }
+
+        const overallAccuracy = calculateOverallAccuracy();
+        if (overallAccuracy < 60) {
+            recommendations.push({
+                type: 'general', title: 'Basic Conjugation Review',
+                description: 'Focus on regular verb conjugations before moving to irregular verbs.', priority: 'high'
+            });
+        }
+        return recommendations;
+    }
+
+    function calculateOverallAccuracy() {
+        const progressData = getProgressData();
+        let total = 0, correct = 0;
+        Object.values(progressData.tenseMastery).forEach(data => { total += data.total; correct += data.correct; });
+        return total > 0 ? Math.round((correct / total) * 100) : 0;
+    }
+
+    const Progress = {
+        getProgressData, saveProgressData, updateTenseMastery, addMistake, addActivity,
+        updateStreak, getRecommendedPractice, calculateOverallAccuracy
+    };
+
+    /**
+     * PRACTICE.JS CONTENT
+     */
+    // Fixed: Destructure from correct modules
+    const { generatePracticeQuestion: genPQ, checkConjugation: checkC } = Conjugator;
+    // TENSE_NAMES already available in global VerbsData
+
+    let practiceSession = {
+        questions: [], currentQuestionIndex: 0, score: 0, correctAnswers: 0, incorrectAnswers: 0, skippedQuestions: 0, mistakes: []
+    };
+
+    function startPracticeSession(options = {}, numQuestions = 10) {
+        practiceSession = {
+            questions: [], currentQuestionIndex: 0, score: 0, correctAnswers: 0, incorrectAnswers: 0, skippedQuestions: 0, mistakes: []
+        };
+        for (let i = 0; i < numQuestions; i++) {
+            const question = genPQ(options);
+            practiceSession.questions.push(question);
+        }
+        return getCurrentQuestion();
+    }
+
+    function getCurrentQuestion() {
+        if (practiceSession.currentQuestionIndex >= practiceSession.questions.length) return null;
+        return practiceSession.questions[practiceSession.currentQuestionIndex];
+    }
+
+    function submitAnswer(answer) {
+        const currentQuestion = getCurrentQuestion();
+        if (!currentQuestion) return { success: false, message: 'No current question' };
+        
+        const isCorrect = checkC(answer, currentQuestion.correctAnswer);
+        if (isCorrect) {
+            practiceSession.correctAnswers++;
+            practiceSession.score += 10;
+        } else {
+            practiceSession.incorrectAnswers++;
+            practiceSession.mistakes.push({
+                verb: currentQuestion.verb, tense: currentQuestion.tense, person: currentQuestion.person,
+                userAnswer: answer, correctAnswer: currentQuestion.correctAnswer
+            });
+        }
+        practiceSession.currentQuestionIndex++;
+        return {
+            success: true, isCorrect: isCorrect, correctAnswer: currentQuestion.correctAnswer,
+            nextQuestion: getCurrentQuestion(), score: practiceSession.score,
+            questionNumber: practiceSession.currentQuestionIndex, totalQuestions: practiceSession.questions.length
+        };
+    }
+
+    function skipQuestion() {
+        const currentQuestion = getCurrentQuestion();
+        if (!currentQuestion) return null;
+        practiceSession.skippedQuestions++;
+        practiceSession.mistakes.push({
+            verb: currentQuestion.verb, tense: currentQuestion.tense, person: currentQuestion.person,
+            userAnswer: '', correctAnswer: currentQuestion.correctAnswer, skipped: true
+        });
+        practiceSession.currentQuestionIndex++;
+        return getCurrentQuestion();
+    }
+
+    function getPracticeResults() {
+        const totalAnswered = practiceSession.correctAnswers + practiceSession.incorrectAnswers;
+        const percentage = totalAnswered > 0 ? Math.round((practiceSession.correctAnswers / totalAnswered) * 100) : 0;
+        const improvementSuggestions = [];
+        if (percentage < 60) improvementSuggestions.push('Start with regular verbs before moving to irregular ones');
+        if (practiceSession.skippedQuestions > practiceSession.questions.length * 0.3) improvementSuggestions.push('Try not to skip questions; make an educated guess instead');
+        
+        return {
+            score: practiceSession.score, correctAnswers: practiceSession.correctAnswers,
+            incorrectAnswers: practiceSession.incorrectAnswers, skippedQuestions: practiceSession.skippedQuestions,
+            totalQuestions: practiceSession.questions.length, percentage: percentage, mistakes: practiceSession.mistakes,
+            improvementSuggestions: improvementSuggestions
+        };
+    }
+
+    function savePracticeSessionFunc() {
+        const history = localStorage.getItem('practiceHistory') ? JSON.parse(localStorage.getItem('practiceHistory')) : [];
+        history.push({
+            date: new Date().toISOString(), score: practiceSession.score,
+            percentage: Math.round((practiceSession.correctAnswers / (practiceSession.correctAnswers + practiceSession.incorrectAnswers)) * 100) || 0,
+            totalQuestions: practiceSession.questions.length, correctAnswers: practiceSession.correctAnswers,
+            incorrectAnswers: practiceSession.incorrectAnswers, skippedQuestions: practiceSession.skippedQuestions
+        });
+        if (history.length > 20) history.shift();
+        localStorage.setItem('practiceHistory', JSON.stringify(history));
+    }
+
+    const Practice = {
+        startPracticeSession, getCurrentQuestion, submitAnswer, skipQuestion,
+        getPracticeResults, savePracticeSession: savePracticeSessionFunc, practiceSession
+    };
+
+    /**
+     * MAIN.JS CONTENT
+     */
+    document.addEventListener('DOMContentLoaded', () => {
+        // Elements
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const verbInput = document.getElementById('verb-input');
+        const tenseSelect = document.getElementById('tense-select');
+        const conjugateBtn = document.getElementById('conjugate-btn');
+        const verbInfo = document.getElementById('verb-info');
+        const verbInfinitive = document.getElementById('verb-infinitive');
+        const verbType = document.getElementById('verb-type');
+        const verbTranslation = document.getElementById('verb-translation');
+        const conjugationResult = document.getElementById('conjugation-result');
+        const conjugationTitle = document.getElementById('conjugation-title');
+        const conjugationTable = document.getElementById('conjugation-table');
+        const conjugationPlaceholder = document.getElementById('conjugation-placeholder');
+        const startPracticeBtn = document.getElementById('start-practice-btn');
+        const practiceArea = document.getElementById('practice-area');
+        const practicePlaceholder = document.getElementById('practice-placeholder');
+        const practiceResults = document.getElementById('practice-results');
+        const questionNumber = document.getElementById('question-number');
+        const totalQuestions = document.getElementById('total-questions');
+        const practiceVerb = document.getElementById('practice-verb');
+        const practiceVerbTense = document.getElementById('practice-verb-tense');
+        const practiceVerbPerson = document.getElementById('practice-verb-person');
+        const practiceScore = document.getElementById('practice-score');
+        const practiceAnswer = document.getElementById('practice-answer');
+        const checkAnswerBtn = document.getElementById('check-answer-btn');
+        const skipBtn = document.getElementById('skip-btn');
+        const endPracticeBtn = document.getElementById('end-practice-btn');
+        const nextQuestionBtn = document.getElementById('next-question-btn');
+        const feedbackArea = document.getElementById('feedback-area');
+        const resultsChart = document.getElementById('results-chart');
+        const resultsScore = document.getElementById('results-score');
+        const resultsTotal = document.getElementById('results-total');
+        const resultsCorrect = document.getElementById('results-correct');
+        const resultsIncorrect = document.getElementById('results-incorrect');
+        const resultsSkipped = document.getElementById('results-skipped');
+        const resultsImprovements = document.getElementById('results-improvements');
+        const reviewMistakesBtn = document.getElementById('review-mistakes-btn');
+        const restartPracticeBtn = document.getElementById('restart-practice-btn');
+        const tenseMasteryChart = document.getElementById('tense-mastery-chart');
+        const commonMistakesList = document.getElementById('common-mistakes-list');
+        const verbTypeBtns = document.querySelectorAll('.verb-type-btn');
+        
+        const verbRulesContents = {
+            ar: document.getElementById('ar-verbs-content'),
+            er: document.getElementById('er-verbs-content'),
+            ir: document.getElementById('ir-verbs-content')
+        };
+
+        // Initialize
+        setupEventListeners();
+        loadSampleData(); // Load first to ensure data for charts
+        initCharts();
+
+        function setupEventListeners() {
+            mobileMenuButton.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+            conjugateBtn.addEventListener('click', conjugateVerbUI);
+            verbInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') conjugateVerbUI(); });
+            startPracticeBtn.addEventListener('click', startPractice);
+            checkAnswerBtn.addEventListener('click', checkAnswer);
+            skipBtn.addEventListener('click', skipQuestionUI);
+            endPracticeBtn.addEventListener('click', endPractice);
+            nextQuestionBtn.addEventListener('click', showNextQuestion);
+            reviewMistakesBtn.addEventListener('click', reviewMistakes);
+            restartPracticeBtn.addEventListener('click', startPractice);
+            
+            verbTypeBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const type = btn.dataset.type;
+                    verbTypeBtns.forEach(b => {
+                        b.classList.remove('bg-spanish-red', 'text-white');
+                        b.classList.add('bg-gray-200', 'text-dark-text');
+                    });
+                    btn.classList.remove('bg-gray-200', 'text-dark-text');
+                    btn.classList.add('bg-spanish-red', 'text-white');
+                    Object.keys(verbRulesContents).forEach(key => {
+                        if (key === type) verbRulesContents[key].classList.remove('hidden');
+                        else verbRulesContents[key].classList.add('hidden');
+                    });
+                });
+            });
+        }
+
+        function conjugateVerbUI() {
+            const verb = verbInput.value.trim();
+            const tense = tenseSelect.value;
+            if (!verb) return alert('Please enter a verb');
+            
+            const verbData = VerbsData.getVerb(verb.toLowerCase());
+            if (!verbData) return alert('Verb not found. Please check spelling.');
+            
+            const conjugations = Conjugator.conjugateVerb(verb, tense);
+            if (!conjugations) return alert('Could not conjugate this verb.');
+            
+            verbInfinitive.textContent = verbData.infinitive;
+            verbType.textContent = VerbsData.getVerbTypeName(verbData.type);
+            verbTranslation.textContent = verbData.translation || 'Translation not available';
+            verbInfo.classList.remove('hidden');
+            conjugationTitle.textContent = VerbsData.TENSE_NAMES[tense];
+            
+            conjugationTable.innerHTML = '';
+            const persons = ['yo', 'tú', 'él/ella/usted', 'nosotros', 'vosotros', 'ellos/ellas'];
+            conjugations.forEach((conjugation, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td class="border border-gray-200 px-4 py-2 font-medium">${persons[index]}</td><td class="border border-gray-200 px-4 py-2">${conjugation}</td>`;
+                conjugationTable.appendChild(row);
+            });
+            conjugationResult.classList.remove('hidden');
+            conjugationPlaceholder.classList.add('hidden');
+            Progress.addActivity('conjugation', `Checked conjugation of "${verb}"`);
+        }
+
+        function startPractice() {
+            const tense = document.getElementById('practice-tense').value;
+            const person = document.getElementById('practice-person').value;
+            const difficulty = document.getElementById('practice-difficulty').value;
+            
+            const question = Practice.startPracticeSession({ tense, person, difficulty }, 10);
+            updatePracticeUI(question);
+            practiceArea.classList.remove('hidden');
+            practicePlaceholder.classList.add('hidden');
+            practiceResults.classList.add('hidden');
+            Progress.addActivity('practice', 'Started new practice session');
+        }
+
+        function updatePracticeUI(question) {
+            if (!question) return;
+            questionNumber.textContent = Practice.practiceSession.currentQuestionIndex + 1;
+            totalQuestions.textContent = Practice.practiceSession.questions.length;
+            practiceVerb.textContent = question.verb;
+            practiceVerbTense.textContent = VerbsData.TENSE_NAMES[question.tense];
+            practiceVerbPerson.textContent = VerbsData.PERSON_NAMES[question.person];
+            practiceScore.textContent = Practice.practiceSession.score;
+            practiceAnswer.value = '';
+            feedbackArea.classList.add('hidden');
+            nextQuestionBtn.classList.add('hidden');
+            checkAnswerBtn.classList.remove('hidden');
+            skipBtn.classList.remove('hidden');
+            practiceAnswer.focus();
+        }
+
+        function checkAnswer() {
+            const answer = practiceAnswer.value.trim();
+            if (!answer) return alert('Please enter an answer');
+            
+            const result = Practice.submitAnswer(answer);
+            practiceScore.textContent = result.score;
+            showFeedback(result.isCorrect, result.correctAnswer);
+            
+            const currentQ = Practice.practiceSession.questions[Practice.practiceSession.currentQuestionIndex - 1];
+            Progress.updateTenseMastery(currentQ.tense, result.isCorrect);
+            if (!result.isCorrect) {
+                Progress.addMistake({
+                    verb: currentQ.verb, tense: currentQ.tense, person: currentQ.person, userAnswer: answer, correctAnswer: result.correctAnswer
+                });
+            }
+            
+            if (!result.nextQuestion) {
+                setTimeout(showPracticeResults, 1500); // Small delay to see feedback
+            } else {
+                nextQuestionBtn.classList.remove('hidden');
+                checkAnswerBtn.classList.add('hidden');
+                skipBtn.classList.add('hidden');
+            }
+        }
+
+        function showFeedback(isCorrect, correctAnswer) {
+            feedbackArea.classList.remove('hidden');
+            if (isCorrect) {
+                feedbackArea.className = 'p-4 rounded-lg bg-green-100 text-green-800';
+                feedbackArea.innerHTML = '<div class="flex items-center gap-3"><i class="fa fa-check-circle text-2xl"></i><div><p class="font-bold">Correct!</p></div></div>';
+            } else {
+                feedbackArea.className = 'p-4 rounded-lg bg-red-100 text-red-800';
+                feedbackArea.innerHTML = `<div class="flex items-center gap-3"><i class="fa fa-times-circle text-2xl"></i><div><p class="font-bold">Incorrect</p><p>Answer: <span class="font-bold">${correctAnswer}</span></p></div></div>`;
+            }
+        }
+
+        function skipQuestionUI() {
+            const nextQ = Practice.skipQuestion();
+            if (!nextQ) showPracticeResults();
+            else updatePracticeUI(nextQ);
+        }
+
+        function showNextQuestion() {
+            updatePracticeUI(Practice.getCurrentQuestion());
+        }
+
+        function endPractice() {
+            showPracticeResults();
+        }
+
+        function showPracticeResults() {
+            const results = Practice.getPracticeResults();
+            resultsScore.textContent = `${results.percentage}%`;
+            resultsTotal.textContent = results.totalQuestions;
+            resultsCorrect.textContent = results.correctAnswers;
+            resultsIncorrect.textContent = results.incorrectAnswers;
+            resultsSkipped.textContent = results.skippedQuestions;
+            
+            resultsImprovements.innerHTML = '';
+            results.improvementSuggestions.forEach(s => {
+                const li = document.createElement('li'); li.textContent = s; resultsImprovements.appendChild(li);
+            });
+            
+            if (window.resultsChartInstance) window.resultsChartInstance.destroy();
+            window.resultsChartInstance = new Chart(resultsChart.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [results.percentage, 100 - results.percentage],
+                        backgroundColor: [results.percentage >= 60 ? '#10B981' : '#EF4444', '#E5E7EB'],
+                        borderWidth: 0, cutout: '80%'
+                    }]
+                },
+                options: { responsive: true, plugins: { legend: { display: false }, tooltip: { enabled: false } } }
+            });
+            
+            practiceResults.classList.remove('hidden');
+            practiceArea.classList.add('hidden');
+            Practice.savePracticeSession();
+            Progress.addActivity('practice', `Completed practice session (${results.percentage}% correct)`);
+            updateTenseMasteryChart();
+            updateCommonMistakesList();
+        }
+
+        function reviewMistakes() {
+            const results = Practice.getPracticeResults();
+            if (results.mistakes.length === 0) return alert('No mistakes to review! Great job!');
+            let msg = 'Mistakes Review:\n\n';
+            results.mistakes.forEach((m, i) => {
+                msg += `${i+1}. ${m.verb} (${VerbsData.TENSE_NAMES[m.tense]}, ${VerbsData.PERSON_NAMES[m.person]})\n   You: ${m.userAnswer || '(skipped)'}\n   Correct: ${m.correctAnswer}\n\n`;
+            });
+            alert(msg);
+        }
+
+        function initCharts() {
+            updateTenseMasteryChart();
+            updateCommonMistakesList();
+        }
+
+        function updateTenseMasteryChart() {
+            const progressData = Progress.getProgressData();
+            if (window.tenseMasteryChartInstance) window.tenseMasteryChartInstance.destroy();
+            
+            const labels = []; const data = []; const bgColors = [];
+            Object.entries(progressData.tenseMastery).forEach(([k, v]) => {
+                if (v.total > 0) {
+                    labels.push(VerbsData.TENSE_NAMES[k]);
+                    data.push(v.percentage);
+                    bgColors.push(v.percentage >= 80 ? '#10B981' : v.percentage >= 60 ? '#F59E0B' : '#EF4444');
+                }
+            });
+            
+            window.tenseMasteryChartInstance = new Chart(tenseMasteryChart.getContext('2d'), {
+                type: 'bar',
+                data: { labels, datasets: [{ label: 'Mastery %', data, backgroundColor: bgColors, borderRadius: 4 }] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 100 } }, plugins: { legend: { display: false } } }
+            });
+        }
+
+        function updateCommonMistakesList() {
+            const progressData = Progress.getProgressData();
+            commonMistakesList.innerHTML = '';
+            if (progressData.commonMistakes.length === 0) {
+                commonMistakesList.innerHTML = '<li class="text-center text-gray-500 py-4">No mistakes recorded yet</li>';
+                return;
+            }
+            progressData.commonMistakes.slice(0, 3).forEach(m => {
+                const li = document.createElement('li');
+                li.className = 'flex justify-between items-center';
+                li.innerHTML = `<div><p class="font-medium">${m.verb} (${VerbsData.TENSE_NAMES[m.tense]})</p><p class="text-sm text-gray-600">${VerbsData.PERSON_NAMES[m.person]}</p></div><span class="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded">${m.count} mistakes</span>`;
+                commonMistakesList.appendChild(li);
+            });
+        }
+
+        function loadSampleData() {
+            if (!localStorage.getItem('spanishVerbConjugatorProgress')) {
+                const sample = {
+                    tenseMastery: { present: { total: 5, correct: 4, percentage: 80 } },
+                    commonMistakes: [], recentActivities: [], streak: 0, lastPracticeDate: new Date().toISOString()
+                };
+                localStorage.setItem('spanishVerbConjugatorProgress', JSON.stringify(sample));
+            }
         }
     });
-
-    container.innerHTML = html;
-    document.querySelectorAll('.v-btn').forEach(b => b.classList.remove('active'));
-    const btn = document.querySelector(`button[onclick="loadVerb('${verb}')"]`);
-    if(btn) btn.classList.add('active');
-}
-
-function loadVerb(verb) { renderDisplay(verb); }
-
-function setTab(id, el) {
-    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-    el.classList.add('active');
-    if(id === 'quiz') initQuiz();
-    if(id === 'records') showRecords();
-}
-
-/* ================= 测试逻辑 ================= */
-let qData = null;
-let records = JSON.parse(localStorage.getItem('sp_ult_rec') || '[]');
-
-function initQuiz() { loadQuestion(); }
-
-function loadQuestion() {
-    const vKeys = Object.keys(verbsDB);
-    const verb = vKeys[Math.floor(Math.random() * vKeys.length)];
-    // 修复：测试时态包含sub_imp_ra，移除sub_imp1
-    const tenses = ['pres','pret','imp','fut','cond','sub_pres','sub_imp_ra','comp_pres','comp_imp','imp_af'];
-    const tense = tenses[Math.floor(Math.random() * tenses.length)];
-    
-    // 逻辑：随机抽取人称
-    let pIdx;
-    let maxAttempts = 20; // 防止无限循环
-    do {
-        pIdx = Math.floor(Math.random() * 6);
-        // 如果是命令式，不能是0
-        if(tense === 'imp_af' && pIdx === 0) continue;
-        // 如果是拉美模式，不能是4 (Vosotros)
-        if(isLatamMode && pIdx === 4) continue;
-        
-        break; // 找到合适的人称
-    } while (maxAttempts-- > 0);
-
-    qData = { verb, tense, pIdx };
-    
-    document.getElementById('q-verb').innerText = verb.toUpperCase();
-    document.getElementById('q-meta').innerText = `${labels[tense] || tense} - ${pronouns[pIdx]}`;
-    document.getElementById('q-input').value = '';
-    document.getElementById('q-feedback').innerText = '';
-    document.getElementById('q-input').focus();
-}
-
-function checkAnswer() {
-    if(!qData) return;
-    const user = document.getElementById('q-input').value.trim().toLowerCase();
-    const correctHtml = conjugate(qData.verb, qData.tense, qData.pIdx);
-    const correct = correctHtml.replace(/<[^>]*>/g, '').toLowerCase().trim();
-    
-    const fb = document.getElementById('q-feedback');
-    if(user === correct) {
-        fb.innerHTML = '<span class="correct-msg">¡Correcto!</span>';
-        setTimeout(loadQuestion, 1000);
-    } else {
-        fb.innerHTML = `<span class="wrong-msg">Error. Respuesta: ${correct}</span>`;
-        saveRecord(qData, correct);
-    }
-}
-
-// 智能输入逻辑 (修复：补充大写字符替换)
-document.getElementById('q-input').addEventListener('input', function(e) {
-    const val = e.target.value;
-    // 检测 ' + vowel 的模式（大小写都支持）
-    if (val.endsWith("'a") || val.endsWith("'A")) { e.target.value = val.slice(0, -2) + "á"; }
-    else if (val.endsWith("'e") || val.endsWith("'E")) { e.target.value = val.slice(0, -2) + "é"; }
-    else if (val.endsWith("'i") || val.endsWith("'I")) { e.target.value = val.slice(0, -2) + "í"; }
-    else if (val.endsWith("'o") || val.endsWith("'O")) { e.target.value = val.slice(0, -2) + "ó"; }
-    else if (val.endsWith("'u") || val.endsWith("'U")) { e.target.value = val.slice(0, -2) + "ú"; }
-    else if (val.endsWith("'n") || val.endsWith("'N")) { e.target.value = val.slice(0, -2) + "ñ"; }
-    else if (val.endsWith("u:") || val.endsWith("U:")) { e.target.value = val.slice(0, -2) + "ü"; }
-});
-
-function addChar(c) { 
-    const i = document.getElementById('q-input');
-    i.value += c; i.focus();
-}
-
-function nextQuestion() { loadQuestion(); }
-document.getElementById('q-input').addEventListener('keypress', e => { if(e.key==='Enter') checkAnswer(); });
-
-/* ================= 错题记录 ================= */
-function saveRecord(q, ans) {
-    const ctx = `${pronouns[q.pIdx]} <strong>${ans}</strong> (${q.verb})`;
-    records.unshift({...q, ans, ctx, time: new Date().toLocaleDateString()});
-    if(records.length > 50) records.pop();
-    localStorage.setItem('sp_ult_rec', JSON.stringify(records));
-}
-
-function showRecords() {
-    const div = document.getElementById('records-list');
-    if(records.length === 0) {
-        div.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">暂无记录</div>';
-        return;
-    }
-    let html = '';
-    records.forEach(r => {
-        html += `<div class="record-item">
-            <div style="font-weight:bold; color:#333;">${r.verb.toUpperCase()} <span style="font-weight:normal; color:#777; font-size:0.9em;">${labels[r.tense] || r.tense}</span></div>
-            <div style="margin-top:5px; background:#f5f5f5; padding:8px; border-radius:4px;">${r.ctx}</div>
-        </div>`;
-    });
-    div.innerHTML = html;
-}
-
-function clearRecords() {
-    if(confirm('确定清空?')) {
-        records = [];
-        localStorage.setItem('sp_ult_rec', '[]');
-        showRecords();
-    }
-}
-
-// 初始化加载
-loadVerb('hablar');
-
-</script>
+    </script>
 </body>
 </html>
